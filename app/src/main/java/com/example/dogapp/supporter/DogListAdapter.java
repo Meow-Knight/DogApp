@@ -1,23 +1,16 @@
 package com.example.dogapp.supporter;
 
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.cardview.widget.CardView;
 import androidx.navigation.NavDirections;
 import androidx.navigation.Navigation;
-import androidx.navigation.Navigator;
-import androidx.navigation.fragment.FragmentNavigator;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -46,18 +39,22 @@ public class DogListAdapter extends RecyclerView.Adapter<DogListAdapter.MyViewHo
 
     @Override
     public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
-        try {
-            Glide.with(context)
-                    .load(R.raw.loading)
-                    .into(holder.ivDog);
-        } catch (Exception e){
-            e.printStackTrace();
-        }
+        if (dogBreedList.get(position).getBitmap() != null){
+            holder.ivDog.setImageBitmap(dogBreedList.get(position).getBitmap());
+        } else {
+            try {
+                Glide.with(context)
+                        .load(R.raw.loading)
+                        .into(holder.ivDog);
+            } catch (Exception e){
+                e.printStackTrace();
+            }
 
-        String url = dogBreedList.get(position).getUrl();
-        holder.ivDog.setTag(url);
-        ImageLoader loader = new ImageLoader(holder.ivDog, url, dogBreedList.get(position));
-        loader.execute();
+            String url = dogBreedList.get(position).getUrl();
+            holder.ivDog.setTag(url);
+            ImageLoader loader = new ImageLoader(holder.ivDog, url, dogBreedList.get(position));
+            loader.execute();
+        }
 
         holder.tvDogName.setText(dogBreedList.get(position).getName());
         holder.tvDogBredFor.setText(dogBreedList.get(position).getBredFor());

@@ -11,7 +11,6 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.net.URLConnection;
 
 public class ImageLoader extends AsyncTask<Void, Void, Bitmap> {
 
@@ -28,15 +27,9 @@ public class ImageLoader extends AsyncTask<Void, Void, Bitmap> {
     @Override
     protected Bitmap doInBackground(Void... voids) {
         try{
-            URL aURL = new URL(this.url);
-            URLConnection connect = aURL.openConnection();
-            connect.connect();
-
-            InputStream is = connect.getInputStream();
-            BufferedInputStream bis = new BufferedInputStream(is);
-            Bitmap bm = BitmapFactory.decodeStream(bis);
-            bis.close();
-            is.close();
+            InputStream is = new URL(dogBreed.getUrl()).openStream();
+            Bitmap bm = BitmapFactory.decodeStream(is);
+            dogBreed.setBitmap(bm);
             return bm;
         }catch(IOException e){
             return null;
@@ -48,7 +41,6 @@ public class ImageLoader extends AsyncTask<Void, Void, Bitmap> {
         if(url.equals(imageView.getTag())){
             imageView.setImageBitmap(bitmap);
             imageView.setTag(null);
-            dogBreed.setBitmap(bitmap);
         }
     }
 }
