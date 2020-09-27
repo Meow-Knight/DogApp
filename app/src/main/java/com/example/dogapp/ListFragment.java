@@ -7,6 +7,7 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.SearchView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -29,6 +30,7 @@ public class ListFragment extends Fragment {
 
     // components
     private RecyclerView rvDogBreeds;
+    private SearchView svDogBreed;
 
     // values
     private final int SPAN_NUMBER = 2;
@@ -59,34 +61,12 @@ public class ListFragment extends Fragment {
         rvDogBreeds.setLayoutManager(layoutManager);
         ItemTouchHelper.SimpleCallback touchHelperCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT) {
             private final ColorDrawable background = new ColorDrawable(getResources().getColor(R.color.black_gray));
-
-//            @Override
-//            public void onChildDrawOver(@NonNull Canvas c, @NonNull RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, float dX, float dY, int actionState, boolean isCurrentlyActive) {
-//                super.onChildDrawOver(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
-//                System.out.println("onChildDrawOver");
-//            }
-//
-//            @Override
-//            public void onMoved(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, int fromPos, @NonNull RecyclerView.ViewHolder target, int toPos, int x, int y) {
-//                super.onMoved(recyclerView, viewHolder, fromPos, target, toPos, x, y);
-//                System.out.println("onMoved");
-//            }
-//
-//            @Override
-//            public void onSelectedChanged(@Nullable RecyclerView.ViewHolder viewHolder, int actionState) {
-//                super.onSelectedChanged(viewHolder, actionState);
-//                System.out.println("onSelectedChanged");
-//            }
-
             @Override
             public int getMovementFlags(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder) {
                 int dragFlags = ItemTouchHelper.DOWN;
                 int swipeFlags = ItemTouchHelper.END;
                 return makeMovementFlags(dragFlags, swipeFlags);
             }
-
-            ///
-
 
             @Override
             public boolean isItemViewSwipeEnabled() {
@@ -100,7 +80,6 @@ public class ListFragment extends Fragment {
 
             @Override
             public boolean onMove(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, RecyclerView.ViewHolder target) {
-                System.out.println("ON MOVE");
                 return false;
             }
 
@@ -113,23 +92,17 @@ public class ListFragment extends Fragment {
             public void onChildDraw(Canvas c, RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, float dX, float dY, int actionState, boolean isCurrentlyActive) {
                 super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
 
-                System.out.println("onChildDraw");
                 View itemView = viewHolder.itemView;
 
                 if (dX > 0) {
-                    System.out.println("dX >>>>>>>>>>>>>> 0");
                     background.setBounds(itemView.getLeft(), itemView.getTop(), itemView.getLeft() + ((int) dX), itemView.getBottom());
                 } else if (dX < 0) {
-                    System.out.println("dX <<<<<<<<<<<<<< 0");
                     background.setBounds(itemView.getRight() + ((int) dX), itemView.getTop(), itemView.getRight(), itemView.getBottom());
                 } else {
-                    System.out.println("dX =============== 0");
                     background.setBounds(0, 0, 0, 0);
                 }
 
-//                background.draw(c);
-                View v = getLayoutInflater().inflate(R.layout.draft_item, null);
-                v.draw(c);
+                background.draw(c);
             }
         };
         ItemTouchHelper itemTouchHelper = new ItemTouchHelper(touchHelperCallback);
@@ -137,8 +110,6 @@ public class ListFragment extends Fragment {
 
         initialEvents();
     }
-
-
 
     private void initialEvents() {
         getView().setOnKeyListener((v, keyCode, event) -> {
@@ -149,9 +120,25 @@ public class ListFragment extends Fragment {
             }
             return false;
         });
+
+        svDogBreed.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String s) {
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String s) {
+                String input = svDogBreed.getQuery().toString().toLowerCase();
+                viewModel.setDataWithQuery(input);
+                adapter.notifyDataSetChanged();
+                return false;
+            }
+        });
     }
 
     private void mapComponents() {
         rvDogBreeds = getView().findViewById(R.id.rv_dog_list);
+        svDogBreed = getView().findViewById(R.id.sv_dog_breed);
     }
 }

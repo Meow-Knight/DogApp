@@ -19,30 +19,32 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
 
 public class MyViewModel extends AndroidViewModel {
     private Application application;
-    private MutableLiveData<List<DogBreed>> allDogBreedData;
+    private MutableLiveData<List<DogBreed>> dogBreedData;
+    private List<DogBreed> allDogBreedList;
+    private List<DogBreed> searchingDogBreedList;
     private DogsApiService apiService;
 
 
     public MyViewModel(@NonNull Application application) {
         super(application);
         this.application = application;
-        allDogBreedData = new MutableLiveData<>();
-        allDogBreedData.setValue(new ArrayList<>());
+        dogBreedData = new MutableLiveData<>();
+        dogBreedData.setValue(new ArrayList<>());
     }
 
     public List<DogBreed> getAllDogBreed(){
-        if(allDogBreedData == null){
+        if(dogBreedData == null){
             initialDogBreedData();
         }
-        return allDogBreedData.getValue();
+        return dogBreedData.getValue();
     }
 
     public LiveData<List<DogBreed>> getAllDogBreedLiveData(){
-        return allDogBreedData;
+        return dogBreedData;
     }
 
     public void initialDogBreedData() {
-        if (allDogBreedData.getValue().size() == 0){
+        if (dogBreedData.getValue().size() == 0){
             apiService = new DogsApiService();
             apiService.getAllDogs()
                     .subscribeOn(Schedulers.newThread())
@@ -50,7 +52,8 @@ public class MyViewModel extends AndroidViewModel {
                     .subscribeWith(new DisposableSingleObserver<List<DogBreed>>() {
                         @Override
                         public void onSuccess(@io.reactivex.rxjava3.annotations.NonNull List<DogBreed> dogBreeds) {
-                            allDogBreedData.setValue(dogBreeds);
+                            allDogBreedList = dogBreeds;
+                            dogBreedData.setValue(dogBreeds);
                         }
 
                         @Override
@@ -58,5 +61,20 @@ public class MyViewModel extends AndroidViewModel {
                         }
                     });
         }
+    }
+
+    public void setDataWithQuery(String input) {
+        searchingDogBreedList = new ArrayList<>();
+        for(DogBreed dogBreed : allDogBreedList){
+            if(dogBreed.getName().toLowerCase().contains(input)){
+                searchingDogBreedList.add(dogBreed);
+            }
+        }
+
+        dogBreedData.setValue(searchingDogBreedList);
+    }
+
+    public void setDataWithAllDogBreed(){
+        dogBreedData.setValue(allDogBreedList);
     }
 }
