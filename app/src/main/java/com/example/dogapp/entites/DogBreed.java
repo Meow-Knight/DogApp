@@ -34,6 +34,7 @@ public class DogBreed implements Serializable {
     private String temperament;
 
     private Bitmap bitmap;
+    private boolean isShowingDraft;
 
     public DogBreed(int id, String name, String bredFor, String breadGroup, String countryCode, String lifeSpan, String url, String temperament) {
         this.id = id;
@@ -44,6 +45,7 @@ public class DogBreed implements Serializable {
         this.lifeSpan = lifeSpan;
         this.url = url;
         this.temperament = temperament;
+        this.isShowingDraft = false;
     }
 
     public int getId() {
@@ -120,6 +122,14 @@ public class DogBreed implements Serializable {
 
     public void setBitmap(Bitmap bitmap) {
         this.bitmap = bitmap;
+    }
+
+    public boolean isShowingDraft() {
+        return isShowingDraft;
+    }
+
+    public void setShowingDraft(boolean showingDetail) {
+        isShowingDraft = showingDetail;
     }
 
     @Override

@@ -51,10 +51,10 @@ public class DetailFragment extends Fragment {
 
             if(dogBreed.getBitmap() != null){
                 ivDogImg.setImageBitmap(dogBreed.getBitmap());
-            } else {
-                ivDogImg.setTag(dogBreed.getUrl());
-                ImageLoader loader = new ImageLoader(ivDogImg,  dogBreed.getUrl(), dogBreed);
-                loader.execute();
+//            } else {
+//                ivDogImg.setTag(dogBreed.getUrl());
+//                ImageLoader loader = new ImageLoader(ivDogImg,  , dogBreed);
+//                loader.execute();
             }
 
             tvDogName.setText(dogBreed.getName());

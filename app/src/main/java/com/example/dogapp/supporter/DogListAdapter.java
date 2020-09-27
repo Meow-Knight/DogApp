@@ -18,46 +18,92 @@ import com.example.dogapp.ListFragmentDirections;
 import com.example.dogapp.R;
 import com.example.dogapp.entites.DogBreed;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import pl.droidsonroids.gif.GifImageView;
 
-public class DogListAdapter extends RecyclerView.Adapter<DogListAdapter.MyViewHolder> {
+public class DogListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private List<DogBreed> dogBreedList;
     private Context context;
+    private List<Integer> visibleViewHolderIndexs;
+    private DogBreed showingDraftDogBreed;
+
+    // final variable
+    private final int MAX_VISIBLE_VIEWHOLDER = 12;
+    private final int SHOW_DRAFT = 135;
+    private final int HIDE_DRAFT = 246;
+
 
     public DogListAdapter(Context context, List<DogBreed> dogBreedList) {
         this.context = context;
         this.dogBreedList = dogBreedList;
+        visibleViewHolderIndexs = new ArrayList<>();
+    }
+
+    @Override
+    public int getItemViewType(int position) {
+        return dogBreedList.get(position).isShowingDraft() ? SHOW_DRAFT : HIDE_DRAFT;
     }
 
     @NonNull
     @Override
-    public MyViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        return new MyViewHolder(LayoutInflater.from(context).inflate(R.layout.dog_item, parent, false));
+    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        if(viewType == HIDE_DRAFT){
+            return new MyViewHolder(LayoutInflater.from(context).inflate(R.layout.dog_item, parent, false));
+        } else {
+            return new DraftViewHolder(LayoutInflater.from(context).inflate(R.layout.draft_item, parent, false));
+        }
     }
 
     @Override
-    public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
-        if (dogBreedList.get(position).getBitmap() != null){
-            holder.ivDog.setImageBitmap(dogBreedList.get(position).getBitmap());
-        } else {
-            try {
-                Glide.with(context)
-                        .load(R.raw.loading)
-                        .into(holder.ivDog);
-            } catch (Exception e){
-                e.printStackTrace();
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+        if(holder instanceof MyViewHolder){
+            MyViewHolder myViewHolder = (MyViewHolder) holder;
+            int id = dogBreedList.get(position).getId();
+
+            if(visibleViewHolderIndexs.size() == MAX_VISIBLE_VIEWHOLDER){
+                if(id > visibleViewHolderIndexs.get(MAX_VISIBLE_VIEWHOLDER - 1)){
+                    visibleViewHolderIndexs.remove(0);
+                    visibleViewHolderIndexs.add(id);
+                } else if (id < visibleViewHolderIndexs.get(0)){
+                    visibleViewHolderIndexs.set(0, id);
+                }
+            } else {
+                visibleViewHolderIndexs.add(id);
             }
 
-            String url = dogBreedList.get(position).getUrl();
-            holder.ivDog.setTag(url);
-            ImageLoader loader = new ImageLoader(holder.ivDog, url, dogBreedList.get(position));
-            loader.execute();
+            ImageLoader.topId = visibleViewHolderIndexs.get(0);
+            ImageLoader.endId = visibleViewHolderIndexs.get(visibleViewHolderIndexs.size() - 1);
+
+            if (dogBreedList.get(position).getBitmap() != null){
+                myViewHolder.ivDog.setImageBitmap(dogBreedList.get(position).getBitmap());
+            } else {
+                Glide.with(context)
+                        .load(R.raw.loading)
+                        .into(myViewHolder.ivDog);
+
+                myViewHolder.id = id;
+                ImageLoader loader = new ImageLoader(myViewHolder, id, dogBreedList.get(position));
+                loader.execute();
+            }
+
+            myViewHolder.tvDogName.setText(dogBreedList.get(position).getName());
+            myViewHolder.tvDogBredFor.setText(dogBreedList.get(position).getBredFor());
+
+            myViewHolder.cardView.setOnLongClickListener(view -> {
+                showDraftAtPosition(position);
+                return true;
+            });
         }
 
-        holder.tvDogName.setText(dogBreedList.get(position).getName());
-        holder.tvDogBredFor.setText(dogBreedList.get(position).getBredFor());
+        if(holder instanceof DraftViewHolder){
+            DraftViewHolder draftViewHolder = (DraftViewHolder) holder;
+            DogBreed dogBreed = dogBreedList.get(position);
+            draftViewHolder.tvDogName.setText(dogBreed.getName());
+            draftViewHolder.tvLifeSpan.setText(dogBreed.getLifeSpan());
+            draftViewHolder.tvDogBredFor.setText(dogBreed.getBredFor());
+        }
     }
 
     @Override
@@ -65,8 +111,33 @@ public class DogListAdapter extends RecyclerView.Adapter<DogListAdapter.MyViewHo
         return dogBreedList.size();
     }
 
+    public void showDraftAtPosition(int pos){
+        for(DogBreed dogBreed : dogBreedList){
+            dogBreed.setShowingDraft(false);
+        }
+        dogBreedList.get(pos).setShowingDraft(true);
+        notifyDataSetChanged();
+    }
+
+    public boolean isDraftShown(){
+        for(DogBreed dogBreed : dogBreedList){
+            if(dogBreed.isShowingDraft()){
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public void closeDraft(){
+        for(DogBreed dogBreed : dogBreedList){
+            dogBreed.setShowingDraft(false);
+        }
+        notifyDataSetChanged();
+    }
 
     public class MyViewHolder extends RecyclerView.ViewHolder{
+        public int id;
         public CardView cardView;
         public GifImageView ivDog;
         public TextView tvDogName;
@@ -85,6 +156,24 @@ public class DogListAdapter extends RecyclerView.Adapter<DogListAdapter.MyViewHo
                 bundle.putSerializable("dog_breed", dogBreedList.get(getLayoutPosition()));
                 Navigation.findNavController(view).navigate(action.getActionId(), bundle);
             });
+        }
+    }
+
+    public class DraftViewHolder extends RecyclerView.ViewHolder{
+        public int id;
+        public CardView cardView;
+        public TextView tvDogName;
+        public TextView tvLifeSpan;
+        public TextView tvDogBredFor;
+
+        public DraftViewHolder(@NonNull View itemView) {
+            super(itemView);
+            this.cardView = (CardView) itemView;
+            tvDogName = itemView.findViewById(R.id.tv_dog_name);
+            tvDogBredFor = itemView.findViewById(R.id.tv_bred_for);
+            tvLifeSpan = itemView.findViewById(R.id.tv_life_span);
+
+            itemView.setOnClickListener(view -> closeDraft());
         }
     }
 }
