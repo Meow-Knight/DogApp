@@ -14,10 +14,17 @@
         android:layout_height="wrap_content"
         android:queryHint="Input dog name to search"/>
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rv_dog_list"
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/srl_dog_breed"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        />
+        android:layout_height="match_parent">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_dog_list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            />
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
 
 </LinearLayout>

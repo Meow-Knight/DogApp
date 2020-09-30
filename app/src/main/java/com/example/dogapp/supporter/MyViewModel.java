@@ -1,12 +1,16 @@
 package com.example.dogapp.supporter;
 
 import android.app.Application;
+import android.os.AsyncTask;
+import android.os.Handler;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
+import com.example.dogapp.dao.DogBreedDao;
+import com.example.dogapp.dao.DogBreedDatabase;
 import com.example.dogapp.entites.DogBreed;
 import com.example.dogapp.service.DogsApiService;
 
@@ -24,43 +28,65 @@ public class MyViewModel extends AndroidViewModel {
     private List<DogBreed> searchingDogBreedList;
     private DogsApiService apiService;
 
+    private DogBreedDao dogBreedDao;
+
+    private boolean isLoaded = false;
+
 
     public MyViewModel(@NonNull Application application) {
         super(application);
         this.application = application;
         dogBreedData = new MutableLiveData<>();
-        dogBreedData.setValue(new ArrayList<>());
+
+        allDogBreedList = new ArrayList<>();
+        dogBreedData.setValue(allDogBreedList);
+        dogBreedDao = DogBreedDatabase.getInstance(application.getApplicationContext()).dogBreedDao();
+        loadAllDogBreedDataFromDatabase();
     }
 
-    public List<DogBreed> getAllDogBreed(){
-        if(dogBreedData == null){
-            initialDogBreedData();
-        }
-        return dogBreedData.getValue();
+    public void loadAllDogBreedDataFromDatabase(){
+        AsyncTask.execute(() -> {
+            List<DogBreed> tmp = dogBreedDao.getAll();
+            if (tmp.size() == 0){
+                loadDogBreedDataFromUrl();
+            } else {
+                allDogBreedList = tmp;
+            }
+        });
+        new Handler().postDelayed(() -> dogBreedData.setValue(allDogBreedList), 2000);
     }
 
     public LiveData<List<DogBreed>> getAllDogBreedLiveData(){
         return dogBreedData;
     }
 
-    public void initialDogBreedData() {
-        if (dogBreedData.getValue().size() == 0){
-            apiService = new DogsApiService();
-            apiService.getAllDogs()
-                    .subscribeOn(Schedulers.newThread())
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribeWith(new DisposableSingleObserver<List<DogBreed>>() {
-                        @Override
-                        public void onSuccess(@io.reactivex.rxjava3.annotations.NonNull List<DogBreed> dogBreeds) {
-                            allDogBreedList = dogBreeds;
-                            dogBreedData.setValue(dogBreeds);
-                        }
+    public void loadDogBreedDataFromUrl() {
+        isLoaded = false;
+        apiService = new DogsApiService();
+        apiService.getAllDogs()
+                .subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeWith(new DisposableSingleObserver<List<DogBreed>>() {
+                    @Override
+                    public void onSuccess(@io.reactivex.rxjava3.annotations.NonNull List<DogBreed> dogBreeds) {
+                        allDogBreedList = dogBreeds;
+                        dogBreedData.setValue(dogBreeds);
 
-                        @Override
-                        public void onError(@io.reactivex.rxjava3.annotations.NonNull Throwable e) {
-                        }
-                    });
-        }
+                        AsyncTask.execute(() -> {
+                            dogBreedDao.clearDatabase();
+                            for(DogBreed dogBreed : allDogBreedList){
+                                dogBreedDao.insertAll(dogBreed);
+                            }
+                        });
+
+                        isLoaded = true;
+                    }
+
+                    @Override
+                    public void onError(@io.reactivex.rxjava3.annotations.NonNull Throwable e) {
+                        isLoaded = true;
+                    }
+                });
     }
 
     public void setDataWithQuery(String input) {
@@ -74,7 +100,11 @@ public class MyViewModel extends AndroidViewModel {
         dogBreedData.setValue(searchingDogBreedList);
     }
 
-    public void setDataWithAllDogBreed(){
-        dogBreedData.setValue(allDogBreedList);
+    public void refreshData() {
+        loadDogBreedDataFromUrl();
+    }
+
+    public boolean isLoaded(){
+        return isLoaded;
     }
 }

@@ -14,6 +14,8 @@ import androidx.fragment.app.Fragment;
 
 import com.example.dogapp.entites.DogBreed;
 import com.example.dogapp.supporter.ImageLoader;
+import com.example.dogapp.utils.BitmapUtils;
+import com.example.dogapp.utils.ImageUtils;
 
 public class DetailFragment extends Fragment {
     // components
@@ -48,13 +50,8 @@ public class DetailFragment extends Fragment {
 
         if(this.getArguments().getSerializable("dog_breed") != null){
             dogBreed = (DogBreed) this.getArguments().getSerializable("dog_breed");
-
-            if(dogBreed.getBitmap() != null){
-                ivDogImg.setImageBitmap(dogBreed.getBitmap());
-//            } else {
-//                ivDogImg.setTag(dogBreed.getUrl());
-//                ImageLoader loader = new ImageLoader(ivDogImg,  , dogBreed);
-//                loader.execute();
+            if(ImageUtils.isExistFile(dogBreed.getId() + "")){
+                ivDogImg.setImageBitmap(ImageUtils.loadBitmapFromSdCard(dogBreed.getId() + ""));
             }
 
             tvDogName.setText(dogBreed.getName());

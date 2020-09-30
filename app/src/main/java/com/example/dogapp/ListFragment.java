@@ -3,11 +3,13 @@ package com.example.dogapp;
 import android.graphics.Canvas;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.SearchView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -16,6 +18,7 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.example.dogapp.service.DogsApiService;
 import com.example.dogapp.supporter.DogListAdapter;
@@ -31,6 +34,7 @@ public class ListFragment extends Fragment {
     // components
     private RecyclerView rvDogBreeds;
     private SearchView svDogBreed;
+    private SwipeRefreshLayout srlDogBreed;
 
     // values
     private final int SPAN_NUMBER = 2;
@@ -52,7 +56,6 @@ public class ListFragment extends Fragment {
         mapComponents();
 
         viewModel = new ViewModelProvider(this).get(MyViewModel.class);
-        viewModel.initialDogBreedData();
         viewModel.getAllDogBreedLiveData().observe(getViewLifecycleOwner(), dogBreeds -> {
             adapter = new DogListAdapter(getContext(), dogBreeds);
             rvDogBreeds.setAdapter(adapter);
@@ -135,10 +138,24 @@ public class ListFragment extends Fragment {
                 return false;
             }
         });
+
+        srlDogBreed.setOnRefreshListener(() -> {
+            srlDogBreed.setRefreshing(true);
+            viewModel.refreshData();
+
+            new Handler().postDelayed(() -> {
+                if (viewModel.isLoaded()){
+                    srlDogBreed.setRefreshing(false);
+                    Toast.makeText(getContext(), "Refreshed Data!", Toast.LENGTH_SHORT).show();
+                    adapter.notifyDataSetChanged();
+                }
+            }, 1000);
+        });
     }
 
     private void mapComponents() {
         rvDogBreeds = getView().findViewById(R.id.rv_dog_list);
         svDogBreed = getView().findViewById(R.id.sv_dog_breed);
+        srlDogBreed = getView().findViewById(R.id.srl_dog_breed);
     }
 }

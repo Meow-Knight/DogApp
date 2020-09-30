@@ -1,10 +1,15 @@
 package com.example.dogapp.supporter;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -13,10 +18,15 @@ import androidx.navigation.NavDirections;
 import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.bumptech.glide.Glide;
 import com.example.dogapp.ListFragmentDirections;
 import com.example.dogapp.R;
+import com.example.dogapp.activities.MainActivity;
+import com.example.dogapp.dao.DogBreedDao;
+import com.example.dogapp.dao.DogBreedDatabase;
 import com.example.dogapp.entites.DogBreed;
+import com.example.dogapp.utils.ImageUtils;
+import com.squareup.picasso.Picasso;
+import com.squareup.picasso.Target;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,11 +36,8 @@ import pl.droidsonroids.gif.GifImageView;
 public class DogListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private List<DogBreed> dogBreedList;
     private Context context;
-    private List<Integer> visibleViewHolderIndexs;
-    private DogBreed showingDraftDogBreed;
 
     // final variable
-    private final int MAX_VISIBLE_VIEWHOLDER = 12;
     private final int SHOW_DRAFT = 135;
     private final int HIDE_DRAFT = 246;
 
@@ -38,7 +45,6 @@ public class DogListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     public DogListAdapter(Context context, List<DogBreed> dogBreedList) {
         this.context = context;
         this.dogBreedList = dogBreedList;
-        visibleViewHolderIndexs = new ArrayList<>();
     }
 
     @Override
@@ -60,32 +66,43 @@ public class DogListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         if(holder instanceof MyViewHolder){
             MyViewHolder myViewHolder = (MyViewHolder) holder;
-            int id = dogBreedList.get(position).getId();
 
-            if(visibleViewHolderIndexs.size() == MAX_VISIBLE_VIEWHOLDER){
-                if(id > visibleViewHolderIndexs.get(MAX_VISIBLE_VIEWHOLDER - 1)){
-                    visibleViewHolderIndexs.remove(0);
-                    visibleViewHolderIndexs.add(id);
-                } else if (id < visibleViewHolderIndexs.get(0)){
-                    visibleViewHolderIndexs.set(0, id);
+            if (ImageUtils.isExistFile(dogBreedList.get(position).getId() + "")){
+                myViewHolder.gifLoading.setVisibility(View.GONE);
+                Uri uri = Uri.fromFile(ImageUtils.getFileFromSdCard(dogBreedList.get(position).getId() + ""));
+                Picasso.with(context).load(uri).into(myViewHolder.ivDog);
+            } else {
+                if(MainActivity.isNetworkConnected){
+                    Target target = new Target() {
+                        @Override
+                        public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
+                            myViewHolder.gifLoading.setVisibility(View.GONE);
+                            myViewHolder.ivDog.setVisibility(View.VISIBLE);
+                            myViewHolder.ivDog.setImageBitmap(bitmap);
+                            Thread thread = new Thread(){
+                                @Override
+                                public void run() {
+                                    ImageUtils.storeImage(bitmap, dogBreedList.get(position).getId() + "");
+                                }
+                            };
+                            thread.start();
+                        }
+
+                        @Override
+                        public void onBitmapFailed(Drawable errorDrawable) {
+                        }
+
+                        @Override
+                        public void onPrepareLoad(Drawable placeHolderDrawable) {
+                            myViewHolder.ivDog.setVisibility(View.GONE);
+                            myViewHolder.gifLoading.setVisibility(View.VISIBLE);
+                        }
+                    };
+                    myViewHolder.ivDog.setTag(target);
+                    Picasso.with(context)
+                            .load(dogBreedList.get(position).getUrl())
+                            .into(target);
                 }
-            } else {
-                visibleViewHolderIndexs.add(id);
-            }
-
-            ImageLoader.topId = visibleViewHolderIndexs.get(0);
-            ImageLoader.endId = visibleViewHolderIndexs.get(visibleViewHolderIndexs.size() - 1);
-
-            if (dogBreedList.get(position).getBitmap() != null){
-                myViewHolder.ivDog.setImageBitmap(dogBreedList.get(position).getBitmap());
-            } else {
-                Glide.with(context)
-                        .load(R.raw.loading)
-                        .into(myViewHolder.ivDog);
-
-                myViewHolder.id = id;
-                ImageLoader loader = new ImageLoader(myViewHolder, id, dogBreedList.get(position));
-                loader.execute();
             }
 
             myViewHolder.tvDogName.setText(dogBreedList.get(position).getName());
@@ -139,9 +156,10 @@ public class DogListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     public class MyViewHolder extends RecyclerView.ViewHolder{
         public int id;
         public CardView cardView;
-        public GifImageView ivDog;
+        public ImageView ivDog;
         public TextView tvDogName;
         public TextView tvDogBredFor;
+        public GifImageView gifLoading;
 
         public MyViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -149,6 +167,7 @@ public class DogListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             ivDog = itemView.findViewById(R.id.iv_dog_img);
             tvDogName = itemView.findViewById(R.id.tv_dog_name);
             tvDogBredFor = itemView.findViewById(R.id.tv_dog_bred_for);
+            gifLoading = itemView.findViewById(R.id.gif_loading);
 
             itemView.setOnClickListener(view -> {
                 NavDirections action = ListFragmentDirections.actionListFragmentToDetailFragment();

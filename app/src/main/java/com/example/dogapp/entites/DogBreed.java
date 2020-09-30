@@ -1,39 +1,50 @@
 package com.example.dogapp.entites;
 
-import android.graphics.Bitmap;
+import androidx.room.ColumnInfo;
+import androidx.room.Entity;
+import androidx.room.PrimaryKey;
 
 import com.google.gson.annotations.SerializedName;
 
 import java.io.Serializable;
 import java.util.Objects;
 
+@Entity
 public class DogBreed implements Serializable {
 
+    @PrimaryKey
     @SerializedName("id")
     private int id;
 
+    @ColumnInfo(name = "name")
     @SerializedName("name")
     private String name;
 
+    @ColumnInfo(name = "bredFor")
     @SerializedName("bred_for")
     private String bredFor;
 
+    @ColumnInfo
     @SerializedName("breed_group")
     private String breadGroup;
 
+    @ColumnInfo
     @SerializedName("country_code")
     private String countryCode;
 
+    @ColumnInfo
     @SerializedName("life_span")
     private String lifeSpan;
 
+    @ColumnInfo
     @SerializedName("url")
     private String url;
 
+    @ColumnInfo
     @SerializedName("temperament")
     private String temperament;
 
-    private Bitmap bitmap;
+    @ColumnInfo
     private boolean isShowingDraft;
 
     public DogBreed(int id, String name, String bredFor, String breadGroup, String countryCode, String lifeSpan, String url, String temperament) {
@@ -60,68 +71,28 @@ public class DogBreed implements Serializable {
         return name;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
     public String getBredFor() {
         return bredFor;
-    }
-
-    public void setBreadFor(String bredFor) {
-        this.bredFor = bredFor;
     }
 
     public String getBreadGroup() {
         return breadGroup;
     }
 
-    public void setBreadGroup(String breadGroup) {
-        this.breadGroup = breadGroup;
-    }
-
     public String getCountryCode() {
         return countryCode;
-    }
-
-    public void setCountryCode(String countryCode) {
-        this.countryCode = countryCode;
     }
 
     public String getLifeSpan() {
         return lifeSpan;
     }
 
-    public void setLifeSpan(String lifeSpan) {
-        this.lifeSpan = lifeSpan;
-    }
-
     public String getUrl() {
         return url;
     }
 
-    public void setUrl(String url) {
-        this.url = url;
-    }
-
     public String getTemperament() {
         return temperament;
-    }
-
-    public void setTemperament(String temperament) {
-        this.temperament = temperament;
-    }
-
-    public void setBredFor(String bredFor) {
-        this.bredFor = bredFor;
-    }
-
-    public Bitmap getBitmap() {
-        return bitmap;
-    }
-
-    public void setBitmap(Bitmap bitmap) {
-        this.bitmap = bitmap;
     }
 
     public boolean isShowingDraft() {
